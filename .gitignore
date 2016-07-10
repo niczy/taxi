@@ -1,0 +1,6 @@
+data/*.zip
+**/*.csv
+.project
+.settings
+.classpath
+bin
