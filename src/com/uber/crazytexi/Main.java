@@ -1,5 +1,6 @@
 package com.uber.crazytexi;
 
+import com.uber.crazytexi.algorithm.Chaining;
 import com.uber.crazytexi.algorithm.DriverStats;
 import com.uber.crazytexi.algorithm.PickupMatching;
 import com.uber.crazytexi.algorithm.TripAnalyzer;
@@ -41,6 +42,7 @@ public class Main {
     tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(10)));
     tripAnalyzers.add(new PickupMatching(0.4 /* maxWalkingMiles */, Duration.ofMinutes(5)));
     tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(15)));
+    tripAnalyzers.add(new Chaining());
 
     File shartedFileDir = new File(Consts.SHARTED_DATA_PATH);
     List<File> files = Arrays.asList(shartedFileDir.listFiles());
@@ -55,8 +57,11 @@ public class Main {
         new AllTripLoader(files, false /* skipFirstRow */, true /* sorted */);
     Optional<Trip> trip = null;
     while ((trip = allTripLoader.getNext()).isPresent()) {
+      //System.out.print("new trip " + trip.get().startTime());
       for (TripAnalyzer analyzer : tripAnalyzers) {
+        //System.out.println(analyzer.getClass().getName());
         analyzer.addTrip(trip.get());
+        //System.out.println("done " + analyzer.getClass().getName());
       }
       totalRecords++;
       if (totalRecords % 100000 == 0) {

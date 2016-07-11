@@ -47,12 +47,13 @@ public class PickupMatching implements TripAnalyzer {
 
     lastTrip = trip;
     totalTrip++;
+    if (totalTrip % 100000 == 0) {
+      System.out.println(stats());
+    }
   }
 
   @Override
   public String stats() {
-    System.out.println("Total trip size: " + trips.size());
-
     return String.format(
         "%.4f%% of trips can be matched with each other when max wait time "
         + "is %d minutes and max walking distance is %.3f.",

@@ -9,6 +9,7 @@ public final class Trip {
 
   private static final String HACK_LICENSE = "hack_license";
   private static final String PICK_TIME = "pickup_datetime";
+  private static final String DROP_OFF_TIME = "dropoff_datetime";
   private static final String TRIP_TIME_SEC = "trip_time_in_secs";
   private static final String PICK_UP_LAT = "pickup_latitude";
   private static final String PICK_UP_LON = "pickup_longitude";
@@ -23,7 +24,7 @@ public final class Trip {
       "rate_code",
       "store_and_fwd_flag",
       PICK_TIME,
-      "dropoff_datetime",
+      DROP_OFF_TIME,
       "passenger_count",
       TRIP_TIME_SEC,
       "trip_distance",
@@ -34,6 +35,7 @@ public final class Trip {
   };
 
   private Date startTime;
+  private Date endTime;
   private Location pickUpLocation;
   private Location dropOffLocation;
   private final String rawRecod;
@@ -54,6 +56,7 @@ public final class Trip {
     }
     try {
       this.startTime = DATA_FORMAT.parse(props.get(PICK_TIME));
+      this.endTime = DATA_FORMAT.parse(props.get(DROP_OFF_TIME));
       this.pickUpLocation =
           new Location(
               Double.parseDouble(props.get(PICK_UP_LAT)),
@@ -65,12 +68,17 @@ public final class Trip {
     } catch (Exception e) {
       this.badData = true;
       this.startTime = null;
+      this.endTime = null;
       //e.printStackTrace();
     }
   }
 
   public Date startTime() {
     return startTime;
+  }
+
+  public Date endTime() {
+    return endTime;
   }
 
   public Location getPickUpLocation() {

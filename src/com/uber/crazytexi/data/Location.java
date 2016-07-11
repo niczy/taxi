@@ -33,5 +33,12 @@ public final class Location {
   private double rad2deg(double rad) {
     return (rad * 180.0 / Math.PI);
   }
+
+  @Override
+  public boolean equals(Object other) {
+    // TODO: this is complete.
+    Location location = (Location) other;
+    return this.lat == location.lat && this.lon == location.lon;
+  }
 }
 
