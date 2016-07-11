@@ -75,7 +75,7 @@ public final class Chaining implements TripAnalyzer {
   @Override
   public String stats() {
     return String.format(
-        "%.3f %% trips can be chained, longest pontential chain length is %d.",
+        "%.3f %% trips can be chained, longest potential chain length is %d.",
         chainedTripCount * 100.0 / totalTrips, maxChainLength);
   }
 
