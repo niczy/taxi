@@ -7,6 +7,8 @@ import java.util.List;
 
 /**
  * Analyze how many trips can be chained.
+ * The idea is to maintain a list of {@code ChainedTrip} sorted by it's earliest ended trip.
+ * For every new trip, go through all previous ChainedTips to create a new ChainedTrip.
  */
 public final class Chaining implements TripAnalyzer {
 
