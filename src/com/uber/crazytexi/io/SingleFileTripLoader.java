@@ -8,12 +8,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Optional;
 
-public final class SingleTripFileLoader implements TripLoader {
+/**
+ * Loads trip record from single file.
+ */
+public final class SingleFileTripLoader implements TripLoader {
 
   private final BufferedReader reader;
 
-  public SingleTripFileLoader(String filePath, boolean skipFirstRow) throws IOException {
-    File file = new File(filePath);
+  public SingleFileTripLoader(String filePath, boolean skipFirstRow) throws IOException {
+    this(new File(filePath), skipFirstRow);
+  }
+
+  public SingleFileTripLoader(File file, boolean skipFirstRow) throws IOException {
     this.reader = new BufferedReader(new FileReader(file));
     if (skipFirstRow) {
       reader.readLine();

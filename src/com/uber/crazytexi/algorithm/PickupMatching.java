@@ -3,18 +3,19 @@ package com.uber.crazytexi.algorithm;
 import com.uber.crazytexi.data.Trip;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 
 public class PickupMatching implements TripAnalyzer {
 
-  private final List<Trip> trips = new ArrayList<Trip>();
-  private double maxWalkingDistanceMiles = 0.2;
+  private final LinkedList<Trip> trips = new LinkedList<Trip>();
+  private double maxWalkingDistanceMiles;
   private final Duration maxWaitTime;
   private long totalTrip;
   private long matchedTripCount = 0;
+  private Trip lastTrip;
 
-  public PickupMatching(Duration maxWaitTime) {
+  public PickupMatching(double maxWalkingDistanceMiles, Duration maxWaitTime) {
+    this.maxWalkingDistanceMiles = maxWalkingDistanceMiles;
     this.maxWaitTime = maxWaitTime;
   }
 
@@ -23,35 +24,39 @@ public class PickupMatching implements TripAnalyzer {
     if (trip.isBadData()) {
       return;
     }
-    //this.trips.add(trip);
-    totalTrip++;
-  }
+    
+    if (lastTrip != null) {
+      if (lastTrip.startTime().getTime() > trip.startTime().getTime()) {
+        throw new RuntimeException("Trips are not sorted by pick up time.");
+      }
+    }
+    while (trips.size() > 0
+        && trips.get(0).startTime().getTime() + maxWaitTime.toMillis()
+            < trip.startTime().getTime()) {
+      trips.remove(0);
+    }
+      for (Trip earlierTrip : trips) {
+        if (earlierTrip.getPickUpLocation().distanceMiles(trip.getPickUpLocation())
+            <= maxWalkingDistanceMiles) {
+          matchedTripCount++;
+          // this new trip can be matched with a earlier trip.
+          break;
+        }
+      }
+    this.trips.add(trip);
 
-  public void endMonth() {
-    // Clear previous months trips, assuming trip from different months won't match.
-    trips.clear();
+    lastTrip = trip;
+    totalTrip++;
   }
 
   @Override
   public String stats() {
     System.out.println("Total trip size: " + trips.size());
-    for (int i = 0; i < trips.size(); i++) {
-      for (int j = i - 1; j >= 0; j--) {
-        Trip trip1 = trips.get(i);
-        Trip trip2 = trips.get(j);
-        if (trip1.startTime().getTime() <= trip2.startTime().getTime() + maxWaitTime.toMillis()
-            && trip1.getPickUpLocation().distanceMiles(trip2.getPickUpLocation())
-                <= maxWalkingDistanceMiles) {
-          matchedTripCount++;
-          //System.out.println(trips.get(j).startTime() + "---" + trips.get(i).startTime());
-          break;
-        } else {
-          break;
-        }
-      }
-    }
+
     return String.format(
-        "%.4f%% of trips can be matched with each other.", matchedTripCount * 100.0 / totalTrip);
+        "%.4f%% of trips can be matched with each other when max wait time "
+        + "is %d minutes and max walking distance is %.3f.",
+        matchedTripCount * 100.0 / totalTrip, maxWaitTime.toMinutes(), maxWalkingDistanceMiles);
   }
 }
 

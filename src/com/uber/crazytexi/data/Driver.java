@@ -1,8 +1,5 @@
 package com.uber.crazytexi.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class Driver {
 
   private final String hackLicense;

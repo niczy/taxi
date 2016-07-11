@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Trip {
+public final class Trip {
 
   private static final String HACK_LICENSE = "hack_license";
   private static final String PICK_TIME = "pickup_datetime";

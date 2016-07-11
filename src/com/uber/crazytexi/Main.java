@@ -2,25 +2,30 @@ package com.uber.crazytexi;
 
 import com.uber.crazytexi.algorithm.DriverStats;
 import com.uber.crazytexi.algorithm.PickupMatching;
+import com.uber.crazytexi.algorithm.TripAnalyzer;
 import com.uber.crazytexi.algorithm.TripLength;
 import com.uber.crazytexi.data.Trip;
+import com.uber.crazytexi.io.AllTripLoader;
+import com.uber.crazytexi.io.Consts;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.time.Duration;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 public class Main {
 
-  private static final String DATA_PATH = "data";
   private static final String REPORT = "report.txt";
-  private static final int RECORD_COUNT = -1;
+  private static long totalRecords = 0;
 
   public static void main(String[] args) throws IOException {
-    File file = new File(DATA_PATH);
     File report = new File(REPORT);
     if (report.exists()) {
       report.delete();
@@ -29,54 +34,39 @@ public class Main {
 
     Writer writer = new FileWriter(report);
 
-    TripLength tripLength = new TripLength();
-    DriverStats driverStats = new DriverStats();
-    PickupMatching pickupMatching = new PickupMatching(Duration.ofMinutes(5));
+    List<TripAnalyzer> tripAnalyzers = new ArrayList<TripAnalyzer>(); 
+    tripAnalyzers.add(new TripLength());
+    tripAnalyzers.add(new DriverStats());
+    tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(5)));
+    tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(10)));
+    tripAnalyzers.add(new PickupMatching(0.4 /* maxWalkingMiles */, Duration.ofMinutes(5)));
+    tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(15)));
 
-    int recordCount = 0;
-    for (File dataFile : file.listFiles()) {
-      if (dataFile.getName().contains("trip_data_") && !dataFile.getName().contains(".zip")) {
-        recordCount = parseFile(tripLength, driverStats, pickupMatching, recordCount, dataFile);
-        pickupMatching.endMonth();
+    File shartedFileDir = new File(Consts.SHARTED_DATA_PATH);
+    List<File> files = Arrays.asList(shartedFileDir.listFiles());
+    Collections.sort(files, new Comparator<File>(){
+
+      @Override
+      public int compare(File o1, File o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    AllTripLoader allTripLoader =
+        new AllTripLoader(files, false /* skipFirstRow */, true /* sorted */);
+    Optional<Trip> trip = null;
+    while ((trip = allTripLoader.getNext()).isPresent()) {
+      for (TripAnalyzer analyzer : tripAnalyzers) {
+        analyzer.addTrip(trip.get());
+      }
+      totalRecords++;
+      if (totalRecords % 100000 == 0) {
+        System.out.println(totalRecords + " processed");
       }
     }
-    writer.write(tripLength.stats());
-    writer.write(driverStats.stats());
-    writer.write(pickupMatching.stats());
+    for (TripAnalyzer analyzer : tripAnalyzers) {
+      writer.append(analyzer.stats());
+    }
     writer.flush();
     writer.close();
-  }
-
-  private static int parseFile(
-      TripLength tripLength,
-      DriverStats driverStats,
-      PickupMatching pickupMatching,
-      int recordCount,
-      File dataFile) {
-    System.out.println("Parsing file: " + dataFile.getName());
-    Scanner scanner = null;
-    try {
-      scanner = new Scanner(dataFile);
-      String line = scanner.nextLine();
-      //System.out.println(line);
-      while (scanner.hasNext()) {
-        line = scanner.nextLine();
-        //System.out.println(line);
-        Trip trip = new Trip(line);
-        tripLength.addTrip(trip);
-        driverStats.addTrip(trip);
-        pickupMatching.addTrip(trip);
-        recordCount++;
-        if (RECORD_COUNT > 0 && recordCount > RECORD_COUNT) {
-          break;
-        }
-      }
-
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } finally {
-      scanner.close();
-    }
-    return recordCount;
   }
 }

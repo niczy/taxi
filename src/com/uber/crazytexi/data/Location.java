@@ -1,6 +1,6 @@
 package com.uber.crazytexi.data;
 
-public class Location {
+public final class Location {
   
   private final double lat;
   private final double lon;
