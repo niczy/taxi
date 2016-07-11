@@ -155,7 +155,7 @@ public final class Chaining implements TripAnalyzer {
   }
 
   /*
-   * A chained trip may contains two trips.
+   * A chained trip may contain two trips.
    */
   private static class ChainedTrip {
 
