@@ -14,5 +14,7 @@ public interface TripAnalyzer {
    * Return the string report.
    */
   public String stats();
+
+  public void waitUntilDone();
 }
 

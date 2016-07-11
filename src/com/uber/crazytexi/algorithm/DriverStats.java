@@ -36,5 +36,10 @@ public class DriverStats implements TripAnalyzer {
         totalTrips * 1.0 / TOTAL_HOURS / drivers.size(),
         totalTripSec * 100.0 / TOTAL_SECS / drivers.size());
   }
+
+  @Override
+  public void waitUntilDone() {
+    return;
+  }
 }
 

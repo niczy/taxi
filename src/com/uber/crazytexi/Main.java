@@ -40,8 +40,8 @@ public class Main {
     tripAnalyzers.add(new DriverStats());
     tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(5)));
     tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(10)));
-    tripAnalyzers.add(new PickupMatching(0.4 /* maxWalkingMiles */, Duration.ofMinutes(5)));
-    tripAnalyzers.add(new PickupMatching(0.2 /* maxWalkingMiles */, Duration.ofMinutes(15)));
+    tripAnalyzers.add(new PickupMatching(0.1 /* maxWalkingMiles */, Duration.ofMinutes(5)));
+    tripAnalyzers.add(new PickupMatching(0.05 /* maxWalkingMiles */, Duration.ofMinutes(5)));
     tripAnalyzers.add(new Chaining());
 
     File shartedFileDir = new File(Consts.SHARTED_DATA_PATH);
@@ -64,11 +64,12 @@ public class Main {
         //System.out.println("done " + analyzer.getClass().getName());
       }
       totalRecords++;
-      if (totalRecords % 100000 == 0) {
+      if (totalRecords % 10000 == 0) {
         System.out.println(totalRecords + " processed");
       }
     }
     for (TripAnalyzer analyzer : tripAnalyzers) {
+      analyzer.waitUntilDone();
       writer.append(analyzer.stats());
     }
     writer.flush();

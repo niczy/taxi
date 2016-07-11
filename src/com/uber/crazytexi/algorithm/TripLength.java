@@ -21,5 +21,10 @@ public class TripLength implements TripAnalyzer {
     return String.format(
         "Total trip %d, average trip length %f\n", tripCount, totalSec * 1.0 / tripCount);
   }
+
+  @Override
+  public void waitUntilDone() {
+    return;
+  }
 }
 

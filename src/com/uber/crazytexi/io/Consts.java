@@ -5,8 +5,8 @@ import java.util.List;
 
 public final class Consts {
   static final int DATA_COUNT = 12;
-  static final String DATA_PATH = "/usr/nicholaszhao/workspace/tmp/taxi/";
-  public static final String SHARTED_DATA_PATH = "/usr/nicholaszhao/tmp/taxi/sharted";
+  static final String DATA_PATH = "/usr/local/google/home/nicholaszhao/workspace/tmp/taxi/";
+  public static final String SHARTED_DATA_PATH = "/usr/local/google/home/nicholaszhao/tmp/taxi/sharted";
   static final List<String> RAW_TRIP_DATA = new ArrayList<String>();
   static {
     for (int i = 1; i <= Consts.DATA_COUNT; i++) {
