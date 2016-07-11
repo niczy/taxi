@@ -24,7 +24,7 @@ import java.util.concurrent.BlockingQueue;
  */
 public final class Chaining implements TripAnalyzer {
 
-  private static final int MAX_BUFFER_SIZE = 1000;
+  private static final int MAX_BUFFER_SIZE = 100000;
   private long totalTrips = 0;
   // trips is a trip list sorted by endtime.
   private final BlockingQueue<Trip> tripBuffer = new ArrayBlockingQueue<>(MAX_BUFFER_SIZE);
@@ -34,74 +34,102 @@ public final class Chaining implements TripAnalyzer {
 
   public Chaining() {
     new Thread() {
-        @Override
-        public void run() {
-          System.out.println("Starting Chaining thread.");
-          while (true) {
-            Trip trip;
-            try {
-              trip = tripBuffer.take();
-              //System.out.println("Took one trip");
-              innerRun(trip);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-            
+      @Override
+      public void run() {
+        System.out.println("Starting Chaining thread.");
+        while (true) {
+          Trip trip;
+          try {
+            trip = tripBuffer.take();
+            //System.out.println("Took one trip");
+            innerRun(trip);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
           }
         }
+      }
 
-        private void innerRun(Trip trip) { //System.out.println(trips.size());
-          //System.out.println("current start time " + trip.startTime());
-          if (trips.size() > 0) {
-            //System.out.println("first end time " + trips.get(0).trip1.endTime());
-          }
-          while (trips.size() > 0 && trips.get(0).getEndTime() < trip.startTime().getTime()) {
-            //System.out.println("remove");
-            trips.remove(0);
-          }
-          boolean chained = false;
-          List<ChainedTrip> tripsToAdd = new LinkedList<ChainedTrip>();
-          // Start a new chained trip.
-          tripsToAdd.add(new ChainedTrip(trip, null, 1));
+      private void innerRun(Trip trip) { //System.out.println(trips.size());
+        //System.out.println("current start time " + trip.startTime());
+        if (trips.size() > 0) {
+          //System.out.println("first end time " + trips.get(0).trip1.endTime());
+        }
+        while (trips.size() > 0 && trips.get(0).getEndTime() < trip.startTime().getTime()) {
+          //System.out.println("remove");
+          trips.remove(0);
+        }
+        boolean chained = false;
+        List<ChainedTrip> tripsToAdd = new LinkedList<ChainedTrip>();
+        // Start a new chained trip.
+        tripsToAdd.add(new ChainedTrip(trip, null, 1));
 
-          // Check if trip can be chained to previous trips.
+        // Check if trip can be chained to previous trips.
+        for (ChainedTrip previousTrip : trips) {
+          if (previousTrip.trip1.endTime().getTime() > trip.startTime().getTime()) {
+            break;
+          }
+          if (previousTrip.trip1.endTime().getTime() == trip.startTime().getTime()
+              && previousTrip.trip1.getDropOffLocation().equals(trip.getPickUpLocation())) {
+            ChainedTrip chainedTrip =
+                new ChainedTrip(trip, previousTrip.trip2, previousTrip.chainLength + 1);
+            if (chainedTrip.chainLength > maxChainLength) {
+              maxChainLength = chainedTrip.chainLength;
+            }
+            tripsToAdd.add(chainedTrip);
+            chained = true;
+          }
+        }
+        // Check if the new ChainedTip should be kept.
+        // For ChainedTips having same drop off time, only remember the one with longer chainLength.
+        for (ChainedTrip tripToAdd : tripsToAdd) {
+          boolean shouldIgnore = false;
           for (ChainedTrip previousTrip : trips) {
-            if (previousTrip.trip1.endTime().getTime() > trip.startTime().getTime()) {
+            if (previousTrip.trip1.endTime().getTime() > tripToAdd.trip1.endTime().getTime()) {
               break;
             }
-            if (previousTrip.trip1.endTime().getTime() == trip.startTime().getTime()
-                && previousTrip.trip1.getDropOffLocation().equals(trip.getPickUpLocation())) {
-              ChainedTrip chainedTrip =
-                  new ChainedTrip(trip, previousTrip.trip2, previousTrip.chainLength + 1);
-              if (chainedTrip.chainLength > maxChainLength) {
-                maxChainLength = chainedTrip.chainLength;
+            if (previousTrip.trip1.endTime().getTime() == tripToAdd.trip1.endTime().getTime()) {
+              if (previousTrip.trip2 == null && tripToAdd.trip2 == null
+                  || previousTrip.trip2 != null
+                      && tripToAdd.trip2 != null
+                      && previousTrip.trip2.endTime().getTime()
+                          == tripToAdd.trip2.endTime().getTime()) {
+                shouldIgnore = true;
+                if (previousTrip.chainLength >= tripToAdd.chainLength) {
+                  // do nothing
+                } else {
+                  previousTrip.trip1 = tripToAdd.trip1;
+                  previousTrip.trip2 = tripToAdd.trip2;
+                  previousTrip.chainLength = tripToAdd.chainLength;
+                }
               }
-              tripsToAdd.add(chainedTrip);
-              chained = true;
             }
           }
-          for (ChainedTrip tripToAdd : tripsToAdd) {
-            trips.add(tripToAdd);
-            int i = trips.size() - 1;
-            while (i > 0
-                && trips.get(i).trip1.endTime().getTime() < trips.get(i - 1).trip1.endTime().getTime()) {
-              ChainedTrip tmp = trips.get(i);
-              trips.set(i, trips.get(i - 1));
-              trips.set(i - 1, tmp);
-              i--;
-            }
+          if (shouldIgnore) {
+            continue;
           }
-
-          if (chained) {
-            chainedTripCount++;
-          }
-          totalTrips++;
-          if (totalTrips % 1000 == 0) {
-            System.out.println(totalTrips + " processed by Chaining!");
-            System.out.println("Buffer size is " + tripBuffer.size());
-            System.out.println(stats());
+          trips.add(tripToAdd);
+          int i = trips.size() - 1;
+          while (i > 0
+              && trips.get(i).trip1.endTime().getTime()
+                  < trips.get(i - 1).trip1.endTime().getTime()) {
+            ChainedTrip tmp = trips.get(i);
+            trips.set(i, trips.get(i - 1));
+            trips.set(i - 1, tmp);
+            i--;
           }
         }
+
+        if (chained) {
+          chainedTripCount++;
+        }
+        totalTrips++;
+        if (totalTrips % 100000 == 0) {
+          System.out.println(totalTrips + " processed by Chaining!");
+          System.out.println("Buffer size is " + tripBuffer.size());
+          System.out.println("Chained trip size " + trips.size());
+          System.out.println(stats());
+        }
+      }
     }.start();
   }
   
@@ -132,9 +160,9 @@ public final class Chaining implements TripAnalyzer {
   private static class ChainedTrip {
 
     // trip1's end time < trip2's end time
-    final Trip trip1;
-    final Trip trip2;
-    final int chainLength;
+    Trip trip1;
+    Trip trip2;
+    int chainLength;
     public ChainedTrip(Trip trip1, Trip trip2, int chainLength) {
       if (trip2 != null && trip2.endTime().getTime() < trip1.endTime().getTime()) {
         this.trip1 = trip2;
@@ -153,6 +181,7 @@ public final class Chaining implements TripAnalyzer {
         return trip2.endTime().getTime();
       }
     }
+
   }
 
   public static void main(String[] args) throws IOException {
