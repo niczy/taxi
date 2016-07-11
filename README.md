@@ -16,7 +16,7 @@ Execute `src/com/uber/crazytexi/Main.java`
 ## Pickup matching
 The algorithmm is implenmented in `PickupMatching.java`. The idea is to sort the trip by start time. Then go over all the trip, and look forward to find trips that the distance between of their pickup location is smaller then `maxWalkingDistanceMiles` and the difference between their pickup time is smaller than `maxWaitTime`.
 
-Unforturtantly, I didn't finish it since one month's trip data can't be sorted in memory, I would do some preprocess first, break the 12 files into 8784 files, each file contains the trips for only one data. Then run the same algorithm assuing trips across different days can't be matched.
+Unforturtantly, I didn't finish it since one month's trip data can't be sorted in memory, I would do some preprocess first, break the 12 files into 8784 files, each file contains the trips for only one data. Then run the same algorithm. (updated: it's done)
 
 ## Trip matching
 At a given time, if there're two trips with:
