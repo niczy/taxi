@@ -39,6 +39,7 @@ Similar to pick up matching, we need to first sort one day's trips.
 
 ## TODO
 * Didn't look at the data size first, will try to break up the data by day, and solve remaining problems.
+* Also see https://goo.gl/mYiSH4
 
 
 
